@@ -41,7 +41,7 @@ object turtle extends App {
               rule: Instruction => List[Instruction]): List[Instruction] = {
     instructions.flatMap(i =>
       i match {
-        case Branch(_) => 
+        case Branch(l:List[Instruction]) => List(Branch(rewrite(l,rule)))//{val newList = rewrite(l,rule); branch(newList:_*)}
         case _ => rule(i)
       }
     )

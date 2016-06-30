@@ -22,6 +22,11 @@ object turtle extends App {
     val instructions = addInst(sides)
     Turtle.draw(instructions)
   }
+  def flatpolygon(sides: Int, sideLength: Double): Image = {
+    val turnangle = Angle.one/sides
+    val instructions = (1 to sides).toList.flatMap(s => List(forward(sideLength), turn(turnangle)))
+    Turtle.draw(instructions)
+  }
 
   def squareSpiral (sides: Int, initialLength: Int, lenMult: Double): Image = {
     val turnangle = (89.5).degrees
@@ -41,10 +46,43 @@ object turtle extends App {
               rule: Instruction => List[Instruction]): List[Instruction] = {
     instructions.flatMap(i =>
       i match {
-        case Branch(l:List[Instruction]) => List(Branch(rewrite(l,rule)))//{val newList = rewrite(l,rule); branch(newList:_*)}
+        case Branch(insts:List[Instruction]) => {
+          //val insts = rewrite(l,rule)
+          List(branch(rewrite(insts,rule):_*))
+        } //{val newList = rewrite(l,rule); branch(newList:_*)}
         case _ => rule(i)
       }
     )
+  }
+
+  def iterate(steps: Int,
+              seed: List[Instruction],
+              rule: Instruction => List[Instruction]): List[Instruction] = {
+      steps match {
+        case 0 => seed
+        case steps => iterate(steps-1, rewrite(seed,rule), rule)
+      }
+  }
+
+  var stemLength:Int = 10
+
+  def grow(i: Instruction): List[Instruction] = {
+    val stepSize = stemLength
+    i match {
+      case Forward(_) => List(forward(stepSize), forward(stepSize))
+      case NoOp =>
+        List(branch(turn(45.degrees), forward(stepSize), noop),
+          branch(turn(-45.degrees), forward(stepSize), noop))
+      case other => List(other)
+    }
+  }
+
+  def plant (size: Int, len: Int): Image = {
+    stemLength = len
+    val seed = List(forward(stemLength), NoOp)
+    val plantInts = iterate(size, seed, grow)
+
+    Turtle.draw(plantInts)
   }
 }
 
